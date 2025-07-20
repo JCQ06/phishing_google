@@ -10,10 +10,8 @@ from colorama import Fore, Style, init
 import re
 from datetime import datetime
 
-# INITIALIZATION
 init(autoreset=True)
 
-# COLOR SYSTEM
 class Colors:
     PURPLE = '\033[95m'
     DARK_PURPLE = '\033[38;5;54m'
@@ -29,7 +27,6 @@ class Colors:
     BOLD = '\033[1m'
     RESET = '\033[0m'
 
-# BANNER CON ESTILO SANGRIENTO
 def show_banner():
     os.system("clear" if os.name == "posix" else "cls")
     print(f"{Colors.LIGHT_PURPLE}{Colors.BOLD}")
@@ -202,7 +199,6 @@ def start_tunnel():
     try:
         print(f"{Colors.LIGHT_PURPLE}[{Colors.WHITE}+{Colors.LIGHT_PURPLE}] {Colors.WHITE}Starting Cloudflare tunnel...{Colors.RESET}")
         
-        # Iniciar el túnel en segundo plano y redirigir salida
         with open('cloudflared.log', 'w') as log_file:
             process = subprocess.Popen(
                 ['cloudflared', 'tunnel', '--url', 'http://localhost:8080'],
@@ -211,10 +207,8 @@ def start_tunnel():
                 universal_newlines=True
             )
         
-        # Esperar a que el túnel esté listo
         time.sleep(5)
         
-        # Leer la URL del archivo de log
         try:
             with open('cloudflared.log', 'r') as f:
                 content = f.read()
