@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Buscador OSINT</title>
+  <style>
+    /* Reset básico */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      background-color: #121212;
+      color: #ccc;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 50px 20px;
+    }
+    h1 {
+      font-weight: 600;
+      font-size: 2.8rem;
+      margin-bottom: 40px;
+      color: #e0e0e0;
+      letter-spacing: 1.2px;
+    }
+    .search-section {
+      display: flex;
+      align-items: center;
+      max-width: 480px;
+      width: 100%;
+      margin-bottom: 28px;
+      border-bottom: 1px solid #444;
+      padding-bottom: 12px;
+    }
+    input[type="text"] {
+      flex: 1;
+      background-color: #1e1e1e;
+      border: 1px solid #333;
+      border-radius: 4px 0 0 4px;
+      padding: 12px 16px;
+      font-size: 1rem;
+      color: #eee;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #4caf50;
+      background-color: #262626;
+    }
+    button {
+      background-color: #4caf50;
+      border: none;
+      color: #121212;
+      font-weight: 600;
+      font-size: 1rem;
+      padding: 12px 24px;
+      border-radius: 0 4px 4px 0;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      user-select: none;
+      min-width: 160px;
+    }
+    button:hover {
+      background-color: #43a047;
+    }
+    button:active {
+      background-color: #388e3c;
+    }
+    @media (max-width: 520px) {
+      .search-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      input[type="text"] {
+        border-radius: 4px 4px 0 0;
+        margin-bottom: 8px;
+      }
+      button {
+        border-radius: 0 0 4px 4px;
+        min-width: auto;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Buscador OSINT</h1>
+
+  <div class="search-section">
+    <input type="text" id="emailInput" placeholder="Ingresa email" />
+    <button onclick="buscarEmail()">Buscar por Email</button>
+  </div>
+
+  <div class="search-section">
+    <input type="text" id="telefonoInput" placeholder="Ingresa teléfono" />
+    <button onclick="buscarTelefono()">Buscar por Teléfono</button>
+  </div>
+
+  <div class="search-section">
+    <input type="text" id="osintInput" placeholder="Ingresa consulta OSINT" />
+    <button onclick="buscarOSINT()">Buscar Bases de Datos OSINT</button>
+  </div>
+
+  <div class="search-section">
+    <input type="text" id="ipInput" placeholder="Ingresa IP" />
+    <button onclick="buscarIP()">Buscar IP</button>
+  </div>
+
+  <script>
+    function buscarEmail() {
+      const email = document.getElementById('emailInput').value.trim();
+      if (!email) {
+        alert('Por favor ingresa un email.');
+        return;
+      }
+      alert('Buscando email: ' + email);
+    }
+
+    function buscarTelefono() {
+      const telefono = document.getElementById('telefonoInput').value.trim();
+      if (!telefono) {
+        alert('Por favor ingresa un teléfono.');
+        return;
+      }
+      alert('Buscando teléfono: ' + telefono);
+    }
+
+    function buscarOSINT() {
+      const consulta = document.getElementById('osintInput').value.trim();
+      if (!consulta) {
+        alert('Por favor ingresa tu consulta OSINT.');
+        return;
+      }
+      alert('Buscando en bases OSINT: ' + consulta);
+    }
+
+    function buscarIP() {
+      const ip = document.getElementById('ipInput').value.trim();
+      if (!ip) {
+        alert('Por favor ingresa una IP.');
+        return;
+      }
+      alert('Buscando IP: ' + ip);
+    }
+  </script>
+</body>
+</html>

